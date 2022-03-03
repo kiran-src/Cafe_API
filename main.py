@@ -66,5 +66,25 @@ def random():
     # Retun a JSON using Jsonify
     return jsonify(cafe=cafe_random.to_dict())
 
+@app.route('/search', methods=['GET'])
+def search():
+    search_cafes = []
+    query = request.args.get("query")
+    result = request.args.get("result")
+    print("A")
+    check = True
+    for i in cafes[0].__table__.columns:
+        if i.name == query:
+            check = False
+    if check:
+        return jsonify(error=f"Database does not have a dataset named {query} ")
+    for i in cafes:
+        if f"{getattr(i, query)}".lower() == f"{result}".lower():
+            search_cafes.append(i.to_dict())
+    if search_cafes == []:
+        return jsonify(error=f"Database does not have an entry named {result} ")
+    else:
+        return jsonify(cafe=search_cafes)
+
 if __name__ == '__main__':
     app.run(debug=True)
