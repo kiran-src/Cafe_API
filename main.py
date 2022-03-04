@@ -43,24 +43,31 @@ def home():
 
 ## HTTP DELETE - Delete Record
 
+@app.route('/all')
+def all():
+    cafes_dict = []
+    for i in cafes:
+        cafes_dict.append(i.to_dict())
+    return jsonify(cafes=cafes_dict)
+
 @app.route('/random', methods=['GET'])
 def random():
     cafe_random = choice(cafes)
 
     # Return a dictionary
-    cafe_dict = {
-        'id': cafe_random.id,
-        'name': cafe_random.name,
-        'map_url': cafe_random.map_url,
-        'img_url': cafe_random.img_url,
-        'location': cafe_random.location,
-        'seats': cafe_random.seats,
-        'has_toilet': cafe_random.has_toilet,
-        'has_wifi': cafe_random.has_wifi,
-        'has_sockets': cafe_random.has_sockets,
-        'can_take_calls': cafe_random.can_take_calls,
-        'coffee_price': cafe_random.coffee_price
-    }
+    # cafe_dict = {
+    #     'id': cafe_random.id,
+    #     'name': cafe_random.name,
+    #     'map_url': cafe_random.map_url,
+    #     'img_url': cafe_random.img_url,
+    #     'location': cafe_random.location,
+    #     'seats': cafe_random.seats,
+    #     'has_toilet': cafe_random.has_toilet,
+    #     'has_wifi': cafe_random.has_wifi,
+    #     'has_sockets': cafe_random.has_sockets,
+    #     'can_take_calls': cafe_random.can_take_calls,
+    #     'coffee_price': cafe_random.coffee_price
+    # }
     # return f"{cafe_dict}"
 
     # Retun a JSON using Jsonify
