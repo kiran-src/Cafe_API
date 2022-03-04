@@ -130,5 +130,17 @@ def add():
     success = {'success': "Successfully added to the cafe"}
     return jsonify(response=success)
 
+@app.route('/update-price/<cafe_id>', methods=['PATCH'])
+def price_change(cafe_id):
+    c_price = request.form.get("coffee_price")
+    cof = Cafe.query.filter_by(id=cafe_id).first()
+    # print(cof.coffee_price)
+    cof.coffee_price = c_price
+    # Cafe.query.filter_by(id=cafe_id).first().coffee_price = c_price
+    db.session.commit()
+    # print(cof.coffee_price)
+    success = {'success': "Successfully updated the cafe"}
+    return jsonify(response=success)
+
 if __name__ == '__main__':
     app.run(debug=True)
