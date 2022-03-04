@@ -28,6 +28,14 @@ class Cafe(db.Model):
             dict[i.name] = getattr(self, i.name)
         return dict
 
+def check_bool(bool):
+    if bool.lower() == 'true':
+        return True
+    elif bool.lower() == 'false':
+        return False
+    else:
+        return None
+
 cafes = db.session.query(Cafe).all()
 
 @app.route("/")
@@ -92,6 +100,35 @@ def search():
         return jsonify(error=f"Database does not have an entry named {result} ")
     else:
         return jsonify(cafe=search_cafes)
+
+@app.route('/add', methods=['POST'])
+def add():
+    name = request.form.get("name")
+    map_url = request.form.get("map_url")
+    img_url = request.form.get("img_url")
+    location = request.form.get("location")
+    seats = request.form.get("seats")
+    has_toilet = check_bool(request.form.get("has_toilet"))
+    has_wifi = check_bool(request.form.get("has_wifi"))
+    has_sockets = check_bool(request.form.get("has_sockets"))
+    can_take_calls = check_bool(request.form.get("can_take_calls"))
+    coffee_price = request.form.get("coffee_price")
+    to_add = Cafe(
+        name=name,
+        map_url=map_url,
+        img_url=img_url,
+        location=location,
+        seats=seats,
+        has_toilet=has_toilet,
+        has_wifi=has_wifi,
+        has_sockets=has_sockets,
+        can_take_calls=can_take_calls,
+        coffee_price=coffee_price
+    )
+    db.session.add(to_add)
+    db.session.commit()
+    success = {'success': "Successfully added to the cafe"}
+    return jsonify(response=success)
 
 if __name__ == '__main__':
     app.run(debug=True)
