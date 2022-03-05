@@ -43,7 +43,7 @@ def check_bool(bool):
 def check_validity(cafe_id):
     check = True
     for i in db.session.query(Cafe).all():
-
+        print(i.id)
         if int(i.id) == int(cafe_id):
             check = False
             break
