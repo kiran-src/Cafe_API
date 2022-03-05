@@ -1,14 +1,16 @@
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from random import choice
+
 app = Flask(__name__)
 
-##Connect to Database
+# Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cafes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-##Cafe TABLE Configuration
+
+# Café TABLE Configuration
 class Cafe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), unique=True, nullable=False)
@@ -28,6 +30,7 @@ class Cafe(db.Model):
             dict[i.name] = getattr(self, i.name)
         return dict
 
+
 def check_bool(bool):
     if bool.lower() == 'true':
         return True
@@ -36,31 +39,41 @@ def check_bool(bool):
     else:
         return None
 
-cafes = db.session.query(Cafe).all()
+
+def check_validity(cafe_id):
+    check = True
+    for i in db.session.query(Cafe).all():
+
+        if int(i.id) == int(cafe_id):
+            check = False
+            break
+    return check
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-## HTTP GET - Read Record
+# HTTP GET - Read Record
 
-## HTTP POST - Create Record
+# HTTP POST - Create Record
 
-## HTTP PUT/PATCH - Update Record
+# HTTP PUT/PATCH - Update Record
 
-## HTTP DELETE - Delete Record
+# HTTP DELETE - Delete Record
 
 @app.route('/all')
 def all():
     cafes_dict = []
-    for i in cafes:
+    for i in db.session.query(Cafe).all():
         cafes_dict.append(i.to_dict())
     return jsonify(cafes=cafes_dict)
 
+
 @app.route('/random', methods=['GET'])
 def random():
-    cafe_random = choice(cafes)
+    cafe_random = choice(db.session.query(Cafe).all())
 
     # Return a dictionary
     # cafe_dict = {
@@ -81,6 +94,7 @@ def random():
     # Retun a JSON using Jsonify
     return jsonify(cafe=cafe_random.to_dict())
 
+
 @app.route('/search', methods=['GET'])
 def search():
     search_cafes = []
@@ -88,18 +102,19 @@ def search():
     result = request.args.get("result")
     print("A")
     check = True
-    for i in cafes[0].__table__.columns:
+    for i in db.session.query(Cafe).first().__table__.columns:
         if i.name == query:
             check = False
     if check:
         return jsonify(error=f"Database does not have a dataset named {query} ")
-    for i in cafes:
+    for i in db.session.query(Cafe).all():
         if f"{getattr(i, query)}".lower() == f"{result}".lower():
             search_cafes.append(i.to_dict())
-    if search_cafes == []:
+    if not search_cafes:
         return jsonify(error=f"Database does not have an entry named {result} ")
     else:
         return jsonify(cafe=search_cafes)
+
 
 @app.route('/add', methods=['POST'])
 def add():
@@ -130,17 +145,42 @@ def add():
     success = {'success': "Successfully added to the cafe"}
     return jsonify(response=success)
 
+
 @app.route('/update-price/<cafe_id>', methods=['PATCH'])
 def price_change(cafe_id):
     c_price = request.form.get("coffee_price")
-    cof = Cafe.query.filter_by(id=cafe_id).first()
-    # print(cof.coffee_price)
-    cof.coffee_price = c_price
-    # Cafe.query.filter_by(id=cafe_id).first().coffee_price = c_price
-    db.session.commit()
-    # print(cof.coffee_price)
-    success = {'success': "Successfully updated the cafe"}
-    return jsonify(response=success)
+    check = True
+    if check_validity(cafe_id):
+        response = {'error': f"Cafe with an id of {cafe_id} is not found"}
+        return jsonify(response=response), 404
+    else:
+        cof = Cafe.query.filter_by(id=cafe_id).first()
+        # print(cof.coffee_price)
+        cof.coffee_price = c_price
+        # Cafe.query.filter_by(id=cafe_id).first().coffee_price = c_price
+        db.session.commit()
+        # print(cof.coffee_price)
+        response = {'success': "Successfully updated the cafe"}
+        return jsonify(response=response), 200
+
+
+@app.route('/report-closed/<cafe_id>', methods=['DELETE'])
+def delete(cafe_id):
+    api_key = request.form.get("api-key")
+    if api_key == "12345":
+        if check_validity(cafe_id):
+            response = {'error': f"Cafe with an id of {cafe_id} is not found"}
+            return jsonify(response=response), 404
+        else:
+            cafe_del = Cafe.query.filter_by(id=cafe_id).first()
+            db.session.delete(cafe_del)
+            db.session.commit()
+            response = {'success': "Successfully deleted the cafe"}
+            return jsonify(response=response), 200
+    else:
+        response = {'error': "API Key is incorrect"}
+        return jsonify(response=response), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)
